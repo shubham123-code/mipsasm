@@ -1,3 +1,5 @@
+
+
 #include "/Users/maple/Downloads/stdc++.h/stdc++.h"
 #include <fstream>
 using namespace std;
@@ -10,6 +12,7 @@ void readfile(){
         cout<<"File is empty !!\n";
     }
     buffer<<myfile.rdbuf();
+    
     file = buffer.str();
     
 }
