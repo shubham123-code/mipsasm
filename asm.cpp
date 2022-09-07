@@ -56,6 +56,7 @@ int main(){
     ifstream myfile("sum_of_n_natural_nums.txt");
     readfile();
     get_tokens();
+    checkerr();
     if(!file.size()){
         cout<<"File is empty\n";
         return 0;
