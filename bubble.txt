@@ -7,7 +7,6 @@ ldnl 0
 call main
 adj 1
 HALT
-;
 main: adj -3
 stl 1
 stl 2
