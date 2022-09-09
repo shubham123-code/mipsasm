@@ -6,7 +6,9 @@
 using namespace std;
 
 stringstream buffer;
-ifstream myfile("bubble.txt");
+ifstream myfile;
+ofstream o_file("output.o");
+ofstream log_file("asm_log.txt");
 string file;
 void readfile(){
     if(!myfile){
@@ -74,15 +76,21 @@ void set_labels(){
         int c=0;
         string s;
         if(tokens[c].back()==':'){
+            if(tokens[c]=="labels:"){
+                cout<<"label declaration 'label:' not allowed. Choose a different name"<<" (line "<<i+1<<")\n";
+            }
             tokens[c].pop_back();
             cout<<pc<<"\n";
+            if(label.find(tokens[c])!=label.end()){
+                log_file<<"duplicate label found: "<<tokens[c]<<" (line "<<i+1<<")\n";
+            }
             label[tokens[c]]=pc;
         }
         pc++;
     }
 }
-int main(){
-    ifstream myfile("sum_of_n_natural_nums.txt");
+int main(int argc, char* argv[]){
+    myfile.open(argv[1]);
     readfile();
     commands["ldc"]=0;
     commands["adc"]=1;
@@ -107,7 +115,7 @@ int main(){
     set_labels();
     int pc=1;
     vector<string>obj;
-    ofstream o_file("bubble.o");
+    
     for(int i=0;i<lines.size();i++){
         vector<string> tokens=get_tokens(lines[i]);
         if(tokens.back().size()==0)tokens.pop_back();
@@ -121,38 +129,44 @@ int main(){
         string s;
         if(tokens[c].back()==':'){
             c++;
-        }
-        int val=pc;
-        for(int j=7;j>=0;j--){
-            s.push_back('0'+(val>>j&1));
-        }            
+        }          
         int cnt=0;
+        string s1;
         while(c<tokens.size()){
             if(tokens[c].back()==' ')tokens[c].pop_back();
             if(cnt==1){
                 int val=0;
                 if(tokens[c].back()>='a'){
-                    cout<<label[tokens[c]]<<" ";
+                    if(label.find(tokens[c])==label.end()){
+                        log_file<<"invalid label: "<<tokens[c]<<" (line "<<i+1<<")\n";
+                    }
                     val=label[tokens[c]];
                 }
                 else{
                     stringstream val_s(tokens[c]);
-                        val_s>>val;
-                        
+                    val_s>>val;
+
                 }
-                for(int j=7;j>=0;j--){
+                for(int j=23;j>=0;j--){
                     s.push_back('0'+(val>>j&1));
                 }
                 c++;
                 continue;
             }
+            if(commands.find(tokens[c])==commands.end()){
+                log_file<<"invalid command: "<<tokens[c]<<" (line "<<i+1<<")\n";
+            }
             int op=commands[tokens[c]];
             for(int j=7;j>=0;j--){
-                s.push_back('0'+(op>>j&1));
+                s1.push_back('0'+(op>>j&1));
             }
             cnt++;
             c++;
         }
+        if(s.size()==0){
+            s=string(24,'0');
+        }
+        s.append(s1);
         pc++;
         o_file<<s<<"\n";
         cout<<s<<"\n";
