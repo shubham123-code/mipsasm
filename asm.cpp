@@ -9,6 +9,7 @@ stringstream buffer;
 ifstream myfile;
 ofstream o_file("output.o");
 ofstream log_file("asm_log.txt");
+ofstream listing("listing.txt");
 string file;
 void readfile(){
     if(!myfile){
@@ -52,7 +53,8 @@ vector<string> get_tokens(string line){
     int f=0;
     vector<string>tokens;
     for(int i=0;i<line.size();i++){
-        if(!f&&(line[i]==' ')){
+        if(!f&&(line[i]==' '||line[i]==':')){
+            if(line[i]==':')temp.push_back(':');
             if(temp.size()){
                 tokens.push_back(temp);
                 //cout<<temp<<" ";
@@ -80,14 +82,26 @@ void set_labels(){
                 cout<<"label declaration 'label:' not allowed. Choose a different name"<<" (line "<<i+1<<")\n";
             }
             tokens[c].pop_back();
-            cout<<pc<<"\n";
             if(label.find(tokens[c])!=label.end()){
                 log_file<<"duplicate label found: "<<tokens[c]<<" (line "<<i+1<<")\n";
             }
-            label[tokens[c]]=pc;
+            label[tokens[c]]=pc+1;
         }
         pc++;
     }
+}
+string bin_hex(string s){
+    string k;
+    for(int i=0;i<s.size();i+=4){
+        int t=8*(s[i]-'0')+4*(s[i+1]-'0')+2*(s[i+2]-'0')+s[i+3]-'0';
+        if(t<10){
+            k.push_back('0'+t);
+        }
+        else{
+            k.push_back('a'+t-10);
+        }
+    }
+    return k;
 }
 int main(int argc, char* argv[]){
     myfile.open(argv[1]);
@@ -111,6 +125,8 @@ int main(int argc, char* argv[]){
     commands["brlz"]=16;
     commands["br"]=17;
     commands["HALT"]=18;
+    commands["data"]=19;
+    commands["SET"]=20;
     get_line();
     set_labels();
     int pc=1;
@@ -137,6 +153,9 @@ int main(int argc, char* argv[]){
             if(cnt==1){
                 int val=0;
                 if(tokens[c].back()>='a'){
+                    if(tokens[c]=="result"){
+
+                    }
                     if(label.find(tokens[c])==label.end()){
                         log_file<<"invalid label: "<<tokens[c]<<" (line "<<i+1<<")\n";
                     }
@@ -167,10 +186,24 @@ int main(int argc, char* argv[]){
             s=string(24,'0');
         }
         s.append(s1);
-        pc++;
+        string pc1;
+        string temp;
+        for(int i=7;i>=0;i--){
+            if(pc>>i&1){
+                temp.push_back('1');
+            }
+            else{
+                temp.push_back('0');
+            }
+        }
+        pc1=bin_hex(temp);
+        int sz=pc1.size();
+        pc1=string(8-sz,'0')+pc1;
+        string lis=pc1+" "+bin_hex(s)+" "+lines[i];
+        listing<<lis<<"\n";
         o_file<<s<<"\n";
         cout<<s<<"\n";
-        
+        pc++;
     }
     o_file.close();
     if(!file.size()){

@@ -1,0 +1,1 @@
+invalid label: result (line 3)

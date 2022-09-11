@@ -33,7 +33,7 @@ brlz loop
 ldl 1 ; get return address
 adj 3
 return
-triangle: adj -3
+triangle:adj -3
 stl 1
 stl 2
 ldc 1
