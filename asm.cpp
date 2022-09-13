@@ -1,15 +1,15 @@
 
 
-#include "stdc++.hpp"
+#include "stdc++.h"
 //#include <bits/stdc++.h>
 #include <fstream>
 using namespace std;
 
 stringstream buffer;
 ifstream myfile;
-ofstream o_file("output.o");
+ofstream o_file;
 ofstream log_file("asm_log.txt");
-ofstream listing("listing.txt");
+ofstream listing;
 string file;
 void readfile(){
     if(!myfile){
@@ -23,8 +23,9 @@ void readfile(){
 
 map<string,int> commands;
 map<string,int>label;
+map<string,int>label_data;
 vector<string>lines;
-
+int errs=0;
 void get_line(){
     string temp;
     int f=0;
@@ -45,6 +46,9 @@ void get_line(){
             continue;
         }
         temp.push_back(file[i]);
+    }
+    if(temp.size()){
+        lines.push_back(temp);
     }
 }
 
@@ -67,25 +71,41 @@ vector<string> get_tokens(string line){
     tokens.push_back(temp);
     return tokens;
 }
-int checkerr(vector<string> tokens){
-    return 1;
-}
+
 void set_labels(){
     int pc=0;
+    
     for(int i=0;i<lines.size();i++){
+
         vector<string> tokens=get_tokens(lines[i]);
         if(tokens.back().size()==0)tokens.pop_back();
         int c=0;
         string s;
+        for(int i=0;i<tokens.size();i++){
+            if(tokens[i]=="data"){
+                if(i!=0){
+                    stringstream val_s(tokens[i+1]);
+                    int val;
+                    val_s>>val;
+                    label_data[tokens[i-1]]=val;
+                    pc++;
+                    continue;
+                }
+            }
+            
+        }
         if(tokens[c].back()==':'){
-            if(tokens[c]=="labels:"){
-                cout<<"label declaration 'label:' not allowed. Choose a different name"<<" (line "<<i+1<<")\n";
+            if(tokens[c]=="label:"){
+                log_file<<"label declaration 'label:' not allowed. Choose a different name"<<" (line "<<i+1<<")\n";
+                errs=1;
             }
             tokens[c].pop_back();
             if(label.find(tokens[c])!=label.end()){
                 log_file<<"duplicate label found: "<<tokens[c]<<" (line "<<i+1<<")\n";
+                errs=1;
             }
             label[tokens[c]]=pc+1;
+            
         }
         pc++;
     }
@@ -105,6 +125,15 @@ string bin_hex(string s){
 }
 int main(int argc, char* argv[]){
     myfile.open(argv[1]);
+    char out_name[100];
+    strcpy(out_name,argv[1]);
+    int sz=strlen(out_name);
+    out_name[sz-2]='\0';
+    out_name[sz-3]='o';
+    
+    o_file.open(out_name);
+    out_name[sz-3]='l';
+    listing.open(out_name);
     readfile();
     commands["ldc"]=0;
     commands["adc"]=1;
@@ -149,17 +178,22 @@ int main(int argc, char* argv[]){
         int cnt=0;
         string s1;
         while(c<tokens.size()){
-            if(tokens[c].back()==' ')tokens[c].pop_back();
+            while(tokens[c].back()==' ')tokens[c].pop_back();
             if(cnt==1){
                 int val=0;
                 if(tokens[c].back()>='a'){
-                    if(tokens[c]=="result"){
-
+                    if(label_data.find(tokens[c]+":")!=label_data.end()){
+                        cout<<tokens[c]<<"\n";
+                        val=label_data[tokens[c]+":"];
+                        cout<<val<<"\n";
                     }
-                    if(label.find(tokens[c])==label.end()){
-                        log_file<<"invalid label: "<<tokens[c]<<" (line "<<i+1<<")\n";
-                    }
-                    val=label[tokens[c]];
+                    else{
+                        if(label.find(tokens[c])==label.end()){
+                            log_file<<"invalid label: "<<tokens[c]<<" (line "<<i+1<<")\n";
+                            errs=1;
+                        }
+                        val=label[tokens[c]];
+                    }   
                 }
                 else{
                     stringstream val_s(tokens[c]);
@@ -172,8 +206,12 @@ int main(int argc, char* argv[]){
                 c++;
                 continue;
             }
+            if(cnt==1){
+                log_file<<"Extra operand found (line "<<i+1<<")\n";
+            }
             if(commands.find(tokens[c])==commands.end()){
                 log_file<<"invalid command: "<<tokens[c]<<" (line "<<i+1<<")\n";
+                errs=1;
             }
             int op=commands[tokens[c]];
             for(int j=7;j>=0;j--){
@@ -182,6 +220,7 @@ int main(int argc, char* argv[]){
             cnt++;
             c++;
         }
+        
         if(s.size()==0){
             s=string(24,'0');
         }
@@ -205,7 +244,13 @@ int main(int argc, char* argv[]){
         cout<<s<<"\n";
         pc++;
     }
+    if(errs){
+        o_file.clear();
+        listing.clear();
+    }
     o_file.close();
+    log_file.close();
+    listing.close();
     if(!file.size()){
         cout<<"File is empty\n";
         return 0;
