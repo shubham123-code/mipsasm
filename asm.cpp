@@ -1,4 +1,11 @@
-
+/*****************************************************************************
+TITLE: Assembler C Program																																
+AUTHOR:   		Shubham Ghodke
+ROLL NUMBER:	2001CS68
+Declaration of Authorship
+This .cpp file, asm.cpp, is part of the assignment of CS321 at the 
+department of Computer Science and Engineering, IIT Patna . 
+*****************************************************************************/
 
 #include "stdc++.h"
 //#include <bits/stdc++.h>
