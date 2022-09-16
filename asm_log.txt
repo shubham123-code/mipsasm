@@ -1,7 +1,1 @@
-label declaration 'label:' not allowed. Choose a different name (line 1)
-label declaration 'label:' not allowed. Choose a different name (line 2)
-duplicate label found: label (line 2)
-invalid label: nonesuch (line 3)
-invalid label: 08ge (line 4)
-invalid command: fibble (line 9)
-invalid command: 0def (line 10)
+no errors found.
